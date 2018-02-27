@@ -1,7 +1,7 @@
 angular.module('app.models.categories', [
 
 ])
-.service('CategoriesModel', function($http){
+.service('CategoriesModel', function($http, $q){
 	var model = this,
 	URLS = {
 		FETCH: 'data/categories.json'
@@ -18,6 +18,25 @@ angular.module('app.models.categories', [
 	}
 
 	model.getCategories = function(){
-		return $http.get(URLS.FETCH).then(cacheCategories);
+		return (categories) ? $q.when(categories) : $http.get(URLS.FETCH).then(cacheCategories);
+	};
+	model.getCategoryByName = function(categoryName) {
+		var deferred = $q.defer();
+
+		function findCategory() {
+			return _.find(categories, function(el){ 
+				return el.name == categoryName;
+			});
+		};
+
+		if(categories){ 
+			deffered.resolve(findCategory());
+		}else { 
+			model.getCategories()
+				.then(function(result) {
+					deferred.resolve(findCategory());
+				});
+		};
+		return deffered.promise;
 	};
 });
